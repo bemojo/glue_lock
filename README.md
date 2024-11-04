@@ -1,22 +1,28 @@
 # Glue Lock Integration for Home Assistant
 
-This is a custom integration for Home Assistant that allows you to control your Glue Lock.
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+
+This integration allows you to control your Glue Lock device through Home Assistant.
 
 ## Installation
 
-1. Copy the `custom_components/glue_lock` folder to your Home Assistant's `custom_components` directory
-2. Restart Home Assistant
-3. Go to Configuration > Integrations
-4. Click the + button and search for "Glue Lock"
-5. Follow the configuration steps
+1. Using HACS (recommended):
+
+   - Add this repository as a custom repository in HACS
+   - Search for "Glue Lock" and install
+
+2. Manual:
+   - Copy the `custom_components/glue_lock` directory to your Home Assistant's `custom_components` directory
+   - Restart Home Assistant
 
 ## Configuration
 
 The integration requires:
+
 - Username
 - Password
 
-## Features
+## Supported Features
 
 - Lock/unlock control
 - Lock state monitoring
