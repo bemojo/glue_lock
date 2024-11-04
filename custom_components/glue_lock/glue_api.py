@@ -57,12 +57,16 @@ class GlueApi:
             _LOGGER.error("Authentication error: %s", str(e))
             raise
 
+    def set_api_key(self, api_key: str):
+        """Set the API key directly."""
+        self._api_key = api_key
+
     async def get_locks(self):
         """Get all locks."""
         if not self._api_key:
             raise GlueApiError("No API key set")
 
-        _LOGGER.debug("Getting locks with API key: %s", self._api_key)
+        _LOGGER.debug("Getting locks")
         try:
             async with async_timeout.timeout(10):
                 async with self._session.get(
@@ -74,7 +78,7 @@ class GlueApi:
                 ) as response:
                     _LOGGER.debug("Get locks response status: %s", response.status)
                     text = await response.text()
-                    _LOGGER.debug("Get locks response text: %s", text)
+                    _LOGGER.debug("Get locks response: %s", text)
                     
                     if response.status != 200:
                         raise GlueApiError(f"Failed to get locks: {response.status}")
@@ -108,11 +112,13 @@ class GlueApi:
 
     async def lock(self, lock_id: str):
         """Lock the door."""
-        return await self._operate_lock(lock_id, "remoteLock")
+        _LOGGER.debug("Locking door %s", lock_id)
+        return await self._operate_lock(lock_id, "lock")
 
     async def unlock(self, lock_id: str):
         """Unlock the door."""
-        return await self._operate_lock(lock_id, "remoteUnlock")
+        _LOGGER.debug("Unlocking door %s", lock_id)
+        return await self._operate_lock(lock_id, "unlock")
 
     async def _operate_lock(self, lock_id: str, operation: str):
         """Perform lock operation."""
@@ -129,13 +135,12 @@ class GlueApi:
                     },
                     json={"type": operation},
                 ) as response:
+                    text = await response.text()
+                    _LOGGER.debug("Operation response: %s", text)
+                    
                     if response.status != 200:
                         raise GlueApiError(f"Failed to {operation}: {response.status}")
-                    return await response.json()
+                    return json.loads(text)
         except Exception as e:
             _LOGGER.error("Operation error: %s", str(e))
             raise
-
-    def set_api_key(self, api_key: str):
-        """Set the API key directly."""
-        self._api_key = api_key
