@@ -1,0 +1,14 @@
+{
+  "domain": "glue_lock",
+  "name": "Glue Lock",
+  "codeowners": ["@bemojo"],
+  "config_flow": true,
+  "documentation": "https://github.com/bemojo/glue_lock",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/bemojo/glue_lock/issues",
+  "version": "0.1.0",
+  "requirements": [],
+  "dependencies": [],
+  "homeassistant": "2024.1.0",
+  "integration_type": "hub"
+}
