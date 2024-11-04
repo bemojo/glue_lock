@@ -10,7 +10,7 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_LOCKS, CONF_LOCK_ID, CONF_LOCK_NAME
 from .glue_api import GlueApi
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,34 +24,41 @@ async def async_setup_entry(
     api = GlueApi()
     api.set_api_key(entry.data[CONF_API_KEY])
     
-    try:
-        locks = await api.get_locks()
-        _LOGGER.debug("Found locks: %s", locks)
-        async_add_entities(
-            GlueLock(api, lock) for lock in locks
-        )
-    except Exception as err:
-        _LOGGER.error("Error setting up Glue Lock: %s", err)
+    locks_data = entry.data.get(CONF_LOCKS, [])
+    _LOGGER.debug("Setting up locks: %s", locks_data)
+    
+    entities = []
+    for lock in locks_data:
+        try:
+            # Get initial status
+            lock_status = await api.get_lock_status(lock[CONF_LOCK_ID])
+            entities.append(GlueLock(api, lock[CONF_LOCK_ID], lock[CONF_LOCK_NAME], lock_status))
+        except Exception as err:
+            _LOGGER.error("Error setting up lock %s: %s", lock[CONF_LOCK_ID], err)
+    
+    if entities:
+        async_add_entities(entities)
 
 class GlueLock(LockEntity):
     """Representation of a Glue Lock."""
 
-    def __init__(self, api: GlueApi, lock_data: dict) -> None:
+    def __init__(self, api: GlueApi, lock_id: str, name: str, initial_status: dict) -> None:
         """Initialize the lock."""
         self._api = api
-        self._lock_id = lock_data["id"]
-        self._attr_name = lock_data.get("description", f"Glue Lock {self._lock_id}")
-        self._attr_unique_id = f"glue_lock_{self._lock_id}"
+        self._lock_id = lock_id
+        self._attr_name = name
+        self._attr_unique_id = f"glue_lock_{lock_id}"
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, self._lock_id)},
-            "name": self._attr_name,
+            "identifiers": {(DOMAIN, lock_id)},
+            "name": name,
             "manufacturer": "Glue Home",
             "model": "Glue Lock",
         }
-        self._update_from_data(lock_data)
+        self._update_from_data(initial_status)
 
     def _update_from_data(self, data: dict[str, Any]) -> None:
         """Update attributes from lock data."""
+        _LOGGER.debug("Updating lock %s with data: %s", self._lock_id, data)
         last_event = data.get("lastLockEvent", {})
         self._attr_is_locked = last_event.get("eventType") == "lock"
         self._attr_is_jammed = data.get("connectionStatus") != "connected"
@@ -80,4 +87,4 @@ class GlueLock(LockEntity):
             self._update_from_data(data)
         except Exception as err:
             _LOGGER.error("Error updating lock status: %s", err)
-            self._attr_available = False 
+            self._attr_available = False
