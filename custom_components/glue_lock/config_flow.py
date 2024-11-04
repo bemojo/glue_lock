@@ -10,7 +10,6 @@ from homeassistant.const import (
     CONF_API_KEY,
     CONF_PASSWORD,
     CONF_USERNAME,
-    CONF_METHOD,
 )
 from homeassistant.data_entry_flow import FlowResult
 
@@ -18,6 +17,30 @@ from .const import DOMAIN, CONF_AUTH_METHOD, AUTH_API_KEY, AUTH_CREDENTIALS
 from .glue_api import GlueApi, GlueApiError, GlueAuthError
 
 _LOGGER = logging.getLogger(__name__)
+
+AUTH_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_AUTH_METHOD, default=AUTH_CREDENTIALS): vol.In(
+            {
+                AUTH_CREDENTIALS: "Username and Password",
+                AUTH_API_KEY: "API Key",
+            }
+        )
+    }
+)
+
+CREDENTIALS_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_USERNAME): str,
+        vol.Required(CONF_PASSWORD): str,
+    }
+)
+
+API_KEY_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_API_KEY): str,
+    }
+)
 
 class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Glue Lock."""
@@ -27,6 +50,7 @@ class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._api = GlueApi()
+        self._auth_method = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -35,15 +59,11 @@ class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(
                 step_id="user",
-                data_schema=vol.Schema({
-                    vol.Required(CONF_AUTH_METHOD): vol.In({
-                        AUTH_CREDENTIALS: "Username and Password",
-                        AUTH_API_KEY: "API Key",
-                    })
-                })
+                data_schema=AUTH_SCHEMA,
             )
 
-        if user_input[CONF_AUTH_METHOD] == AUTH_CREDENTIALS:
+        self._auth_method = user_input[CONF_AUTH_METHOD]
+        if self._auth_method == AUTH_CREDENTIALS:
             return await self.async_step_credentials()
         return await self.async_step_api_key()
 
@@ -60,7 +80,7 @@ class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input[CONF_PASSWORD],
                 )
                 return self.async_create_entry(
-                    title="Glue Lock",
+                    title=f"Glue Lock ({user_input[CONF_USERNAME]})",
                     data={CONF_API_KEY: api_key},
                 )
             except GlueAuthError:
@@ -71,10 +91,7 @@ class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="credentials",
-            data_schema=vol.Schema({
-                vol.Required(CONF_USERNAME): str,
-                vol.Required(CONF_PASSWORD): str,
-            }),
+            data_schema=CREDENTIALS_SCHEMA,
             errors=errors,
         )
 
@@ -91,8 +108,8 @@ class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self._api.get_locks()
 
                 return self.async_create_entry(
-                    title="Glue Lock",
-                    data=user_input,
+                    title="Glue Lock (API Key)",
+                    data={CONF_API_KEY: user_input[CONF_API_KEY]},
                 )
             except GlueApiError:
                 errors["base"] = "invalid_auth"
@@ -102,8 +119,6 @@ class GlueLockConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="api_key",
-            data_schema=vol.Schema({
-                vol.Required(CONF_API_KEY): str,
-            }),
+            data_schema=API_KEY_SCHEMA,
             errors=errors,
         )
