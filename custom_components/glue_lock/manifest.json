@@ -7,7 +7,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/bemojo/glue_lock/issues",
   "version": "0.1.0",
-  "requirements": [],
+  "requirements": ["aiohttp"],
   "dependencies": [],
   "homeassistant": "2024.1.0",
   "integration_type": "hub"
