@@ -10,5 +10,6 @@
   "requirements": ["aiohttp"],
   "dependencies": [],
   "homeassistant": "2024.1.0",
-  "integration_type": "hub"
+  "integration_type": "hub",
+  "icon": "mdi:lock-smart"
 }
