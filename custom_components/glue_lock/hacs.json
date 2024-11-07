@@ -1,0 +1,7 @@
+{
+  "name": "Glue Lock",
+  "render_readme": true,
+  "country": "SE",
+  "homeassistant": "2024.1.0",
+  "hacs": "1.6.0"
+}
