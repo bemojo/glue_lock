@@ -3,11 +3,11 @@
   "name": "Glue Lock",
   "codeowners": ["@bemojo"],
   "config_flow": true,
+  "dependencies": [],
   "documentation": "https://github.com/bemojo/glue_lock",
+  "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/bemojo/glue_lock/issues",
-  "version": "0.1.0",
   "requirements": ["aiohttp"],
-  "dependencies": [],
-  "integration_type": "hub"
+  "version": "0.2.0"
 }
