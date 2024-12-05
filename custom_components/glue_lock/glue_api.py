@@ -136,10 +136,14 @@ class GlueApi:
                     json={"type": operation},
                 ) as response:
                     text = await response.text()
-                    _LOGGER.debug("Operation response: %s", text)
+                    _LOGGER.debug("%s operation response: %s (status: %s)", 
+                                operation, text, response.status)
                     
-                    if response.status != 200:
+                    if response.status == 503:
+                        raise GlueApiError("Hub is busy, please try again in a minute")
+                    elif response.status not in (200, 201):
                         raise GlueApiError(f"Failed to {operation}: {response.status}")
+                    
                     return json.loads(text)
         except Exception as e:
             _LOGGER.error("Operation error: %s", str(e))

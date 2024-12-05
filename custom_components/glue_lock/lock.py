@@ -19,6 +19,12 @@ _LOGGER = logging.getLogger(__name__)
 # Poll every 10 seconds
 SCAN_INTERVAL = timedelta(seconds=10)
 
+# Icons for different states
+ICON_LOCKED = "mdi:lock"
+ICON_UNLOCKED = "mdi:lock-open"
+ICON_JAMMED = "mdi:lock-alert"
+ICON_UNAVAILABLE = "mdi:lock-off"
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -63,8 +69,19 @@ class GlueLock(LockEntity):
             "name": self._attr_name,
             "manufacturer": "Glue Home",
             "model": "Glue Lock",
+            "sw_version": lock_data.get("firmwareVersion"),
         }
+        self._attr_has_entity_name = True
         self._update_from_data(lock_data)
+
+    @property
+    def icon(self) -> str:
+        """Return the icon to use in the frontend."""
+        if not self._attr_available:
+            return ICON_UNAVAILABLE
+        if self._attr_is_jammed:
+            return ICON_JAMMED
+        return ICON_LOCKED if self._attr_is_locked else ICON_UNLOCKED
 
     def _update_from_data(self, data: dict[str, Any]) -> None:
         """Update attributes from lock data."""
